@@ -1,5 +1,5 @@
 {
-  "name": "@ultimate/aot-loader",
+  "name": "@mcph/aot-loader",
   "version": "0.0.0",
   "description": "AoT loader for Webpack",
   "author": "Ultimate Angular",
