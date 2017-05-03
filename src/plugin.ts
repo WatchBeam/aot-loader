@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import { extname, dirname, join, relative, resolve, sep } from 'path';
 import {
   AotCompiler,
@@ -41,6 +42,9 @@ import { AngularCompilerOptions, AotCompilerHost } from './compiler';
 
 export interface AotConfig {
   entryModule?: string,
+  i18nFormat?: string,
+  i18nFile?: string,
+  locale?: string,
   tsConfig: string
 }
 
@@ -104,6 +108,11 @@ export class AotPlugin {
     } catch (err) {
       throw new Error(`Error parsing tsconfig.json: ${err}`);
     }
+
+    if (config.i18nFile && !existsSync(config.i18nFile)) {
+      throw new Error(`Cannot find translation file ${config.i18nFile}`);
+    }
+
     this.parsedConfig = parseJsonConfigFileContent(this.tsConfig, sys, dirname(tsConfigPath), null, tsConfigPath);
     const angularCompilerOptions = this.tsConfig.angularCompilerOptions || {};
     angularCompilerOptions.basePath = angularCompilerOptions.basePath || dirname(tsConfigPath);
@@ -125,7 +134,11 @@ export class AotPlugin {
     this.program = createProgram(this.parsedConfig.fileNames, this.parsedConfig.options, this.host, this.program);
 
     this.ngCompilerHost = new AotCompilerHost(this.program, angularCompilerOptions, this.context, this.sourceFileCache);
-    this.aotCompiler = createAotCompiler(this.ngCompilerHost, {});
+    this.aotCompiler = createAotCompiler(this.ngCompilerHost, {
+      locale: config.locale,
+      i18nFormat: config.i18nFormat,
+      translations: sys.readFile(config.i18nFile , 'utf8'),
+    });
   }
 
   apply(compiler: any) {
