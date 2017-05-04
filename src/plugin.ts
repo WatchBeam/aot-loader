@@ -127,14 +127,22 @@ export class AotPlugin {
     this.program = createProgram(this.parsedConfig.fileNames, this.parsedConfig.options, this.host, this.program);
 
     this.ngCompilerHost = new AotCompilerHost(this.program, angularCompilerOptions, this.context, this.sourceFileCache);
-    if (config.i18nFile && !existsSync(config.i18nFile)) {
-      throw new Error('Cannot find translation file ' + config.i18nFile);
+
+    let aotCompilerOptions = {};
+    if (config.i18nFile && config.i18nFormat && config.locale) {
+      const i18nFilePath = resolve(process.cwd(), config.i18nFile);
+
+      if (!existsSync(i18nFilePath)) {
+        throw new Error('Cannot find translation file ' + i18nFilePath);
+      }
+
+      aotCompilerOptions = {
+        locale: config.locale,
+        i18nFormat: config.i18nFormat,
+        translations: sys.readFile(i18nFilePath),
+      };
     }
-    this.aotCompiler = createAotCompiler(this.ngCompilerHost, {
-      locale: config.locale,
-      i18nFormat: config.i18nFormat,
-      translations: sys.readFile(config.i18nFile, 'utf8'),
-    });
+    this.aotCompiler = createAotCompiler(this.ngCompilerHost, aotCompilerOptions);
   }
 
   apply(compiler: any) {
