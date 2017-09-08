@@ -19,6 +19,11 @@ export async function aotLoader(source: string, map: string) {
   let sourceFile: SourceFile;
   if (aotPlugin.sourceFileCache.has(this.resourcePath)) {
     sourceFile = aotPlugin.sourceFileCache.get(this.resourcePath);
+
+    // If a previous loader has changed this file, we can't use the cached sourceFile.
+    if (sourceFile.getFullText(sourceFile) !== source) {
+      sourceFile = null;
+    }
   }
 
   const isGenerated = /\.(ngfactory|ngstyle)(\.|$)/.test(this.resourcePath);
